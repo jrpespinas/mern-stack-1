@@ -1,3 +1,6 @@
+const asyncHandler = require("express-async-handler");
+const Goal = require("../models/goal");
+
 /**
  * Displays all recorded goals.
  *
@@ -7,9 +10,11 @@
  * @param {string} res response
  *
  */
-const getGoals = (req, res) => {
-  res.status(200).json({ message: "Get goals from controller" });
-};
+const getGoals = asyncHandler(async (req, res) => {
+  const goals = await Goal.find();
+
+  res.status(200).json(goals);
+});
 
 /**
  * Creates a goal.
@@ -20,14 +25,18 @@ const getGoals = (req, res) => {
  * @param {string} res response
  *
  */
-const setGoals = (req, res) => {
+const setGoals = asyncHandler(async (req, res) => {
   if (!req.body.text) {
     res.status(400);
     throw new Error("Please add a text field");
   }
 
-  res.status(200).json({ message: "Set goals from controller" });
-};
+  const goal = await Goal.create({
+    text: req.body.text,
+  });
+
+  res.status(200).json(goal);
+});
 
 /**
  * Updates a goal given an id.
@@ -38,11 +47,20 @@ const setGoals = (req, res) => {
  * @param {string} res response
  *
  */
-const putGoal = (req, res) => {
-  res.status(200).json({
-    message: `Update goal ${req.params.id} from controller`,
+const putGoal = asyncHandler(async (req, res) => {
+  const goal = await Goal.findById(req.params.id);
+
+  if (!goal) {
+    res.status(400);
+    throw new Error("Goal not found");
+  }
+
+  const updatedGoal = await Goal.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
   });
-};
+
+  res.status(200).json(updatedGoal);
+});
 
 /**
  * Deletes a goal given an id.
@@ -53,11 +71,18 @@ const putGoal = (req, res) => {
  * @param {string} res response
  *
  */
-const deleteGoal = (req, res) => {
-  res.status(200).json({
-    message: `Update goal ${req.params.id} from controller`,
-  });
-};
+const deleteGoal = asyncHandler(async (req, res) => {
+  const goal = await Goal.findById(req.params.id);
+
+  if (!goal) {
+    res.status(400);
+    throw new Error("Goal not found");
+  }
+
+  await goal.remove();
+
+  res.status(200).json({ id: req.params.id });
+});
 
 module.exports = {
   getGoals,
